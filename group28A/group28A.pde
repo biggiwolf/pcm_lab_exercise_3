@@ -1,6 +1,7 @@
 import processing.video.*;
 Movie movie;
 PImage filtered;
+PImage lastFrame;
 
 //low pass filters
 final float[][] average = {    {1/9f,1/9f,1/9f},
@@ -44,6 +45,7 @@ final float[][] sobelHorizontal = { {-1,-2,-1},
 
 void setup(){
   size(320,240);
+  lastFrame = createImage(320, 240, RGB);
   movie = new Movie(this, "PCMLab9.mov");
   movie.play();
 }
@@ -51,6 +53,9 @@ void setup(){
 void draw(){
   if(filtered == null){
     image(movie,0,0);
+    
+    lastFrame.copy(movie, 0, 0, 320, 240, 0, 0, 320, 240);
+    lastFrame.updatePixels();
   }
   else{
     image(filtered,0,0);
@@ -60,8 +65,13 @@ void draw(){
 
 //called every time a new frame is available to read
 void movieEvent(Movie m){
+  lastFrame.copy(m, 0, 0, m.width, m.height, 0, 0, m.width, m.height);
+  lastFrame.updatePixels();
+  
   m.read();
-  filtered = fold3by3(sobelHorizontal, m);
+  
+  //filtered = fold3by3(sobelHorizontal, m);
+  filtered = difference(m);
 }
 
 /* folding step by step:
@@ -77,7 +87,6 @@ PImage fold3by3(float[][] filter, PImage originalFrame){
   
   PImage result = createImage(originalFrame.width, originalFrame.height, RGB);
   result.copy(originalFrame, 0, 0, originalFrame.width, originalFrame.height, 0, 0, originalFrame.width, originalFrame.height);
-
 
   for(int x = 0; x < result.width; x++){
       for(int y = 0; y < result.height; y++){
@@ -125,4 +134,26 @@ color calculatePixelFolding(float[][] filter, PImage originalFrame, PImage resul
   }
   
   return color(sumRed, sumGreen, sumBlue);
+}
+
+PImage difference(PImage originalFrame){
+  
+  PImage result = createImage(320, 240, RGB);
+
+  for(int x = 0; x < result.width; x++){
+      for(int y = 0; y < result.height; y++){
+        if(lastFrame.get(x, y) == originalFrame.get(x, y)){
+         color pixelResult = color (255, 255, 255);
+         result.set(x,y,pixelResult);
+        }else{
+         color pixelResult = color (0, 0, 0);
+         result.set(x,y,pixelResult);
+        }
+      }
+  }
+  
+  lastFrame.copy(originalFrame, 0, 0, originalFrame.width, originalFrame.height, 0, 0, originalFrame.width, originalFrame.height);
+  lastFrame.updatePixels();
+  return result;
+
 }
