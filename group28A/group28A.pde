@@ -70,8 +70,8 @@ void movieEvent(Movie m){
   
   m.read();
   
-  //filtered = fold3by3(sobelHorizontal, m);
-  filtered = difference(m);
+  filtered = fold3by3(sobelHorizontal, m);
+  //filtered = difference(m);
 }
 
 /* folding step by step:
